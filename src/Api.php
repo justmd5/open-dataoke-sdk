@@ -23,11 +23,26 @@ class Api extends AbstractAPI
      */
     private $version;
 
-    public function __construct($key, $secret, $version = 'v1.1.1')
+    public function __construct($key, $secret, $version)
     {
         $this->key = $key;
         $this->secret = $secret;
         $this->version = $version;
+    }
+
+    public function request($method, $params, $files = [])
+    {
+        $http = $this->getHttp();
+
+        $params['appKey'] = $this->key;
+        if (!isset($params['version'])) {
+            $params['version'] = isset($this->version) ? $this->version : 'v1.1.1';
+        }
+        $params['sign'] = $this->signature($params);
+        $extUrl = rtrim(str_replace('.', '/', $method), '/');
+        $response = call_user_func_array([$http, 'get'], [sprintf('%s/%s', self::URL, $extUrl), $params, $files]);
+
+        return json_decode(strval($response->getBody()), true);
     }
 
     private function signature($params)
@@ -42,21 +57,6 @@ class Api extends AbstractAPI
         $sign = trim($sign, '&');
 
         return strtoupper(md5($sign . '&key=' . $this->secret));
-    }
-
-    public function request($method, $params, $files = [])
-    {
-        $http = $this->getHttp();
-
-        $params['appKey'] = $this->key;
-        if(!isset($params['version'])){
-            $params['version'] =isset( $this->version)? $this->version : 'v1.1.1';
-        }
-        $params['sign'] = $this->signature($params);
-        $extUrl = rtrim(str_replace('.', '/', $method), '/');
-        $response = call_user_func_array([$http, 'get'], [sprintf('%s/%s', self::URL, $extUrl), $params, $files]);
-
-        return json_decode(strval($response->getBody()), true);
     }
 
 }
