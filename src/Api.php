@@ -49,7 +49,9 @@ class Api extends AbstractAPI
         $http = $this->getHttp();
 
         $params['appKey'] = $this->key;
-        $params['version'] = in_array($this->version, ['v1.1.1', 'v1.1.0', 'v1.0.2']) ? $this->version : 'v1.1.1';
+        if(!isset($params['version'])){
+            $params['version'] =isset( $this->version)? $this->version : 'v1.1.1';
+        }
         $params['sign'] = $this->signature($params);
         $extUrl = rtrim(str_replace('.', '/', $method), '/');
         $response = call_user_func_array([$http, 'get'], [sprintf('%s/%s', self::URL, $extUrl), $params, $files]);
